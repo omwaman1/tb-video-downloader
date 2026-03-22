@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Widevine Key Logger",
+  "version": "2.0.0",
+  "description": "Captures Widevine DRM keys via local pywidevine server",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "downloads",
+    "cookies",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://testbook.com/*",
+    "https://*.testbook.com/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "all_frames": true,
+      "match_about_blank": true,
+      "js": ["content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "all_frames": true,
+      "match_about_blank": true,
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "128": "icon.svg"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "action": {
+    "default_icon": "icon.svg",
+    "default_title": "Widevine Key Logger"
+  }
+}

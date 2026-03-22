@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Widevine Key Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 520px;
+            min-height: 300px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Consolas, monospace;
+            font-size: 12px;
+            padding: 12px;
+        }
+        h1 {
+            font-size: 15px;
+            color: #00ff88;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .server-status {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        .server-online { background: #00cc6633; color: #00ff88; }
+        .server-offline { background: #e9456033; color: #e94560; }
+        .toolbar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #16213e;
+            color: #e0e0e0;
+            border: 1px solid #0f3460;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        button:hover { background: #0f3460; }
+        button.danger { border-color: #e94560; color: #e94560; }
+        button.danger:hover { background: #e94560; color: #fff; }
+        button.primary { background: #00cc66; color: #000; border-color: #00cc66; font-weight: bold; }
+        
+        .session {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .session.has-keys { border-color: #00ff88; }
+        .session-header {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .field { margin-bottom: 4px; }
+        .label {
+            color: #888;
+            display: inline-block;
+            min-width: 80px;
+        }
+        .value { color: #fff; word-break: break-all; }
+        .kid {
+            background: #0a0a1a;
+            padding: 3px 6px;
+            border-radius: 3px;
+            margin: 2px 0;
+            font-family: Consolas, monospace;
+        }
+        .kid .status-usable { color: #00ff88; }
+        .kid .status-other { color: #ffaa00; }
+        
+        /* Extracted key styles */
+        .keys-section {
+            margin-top: 6px;
+            padding: 8px;
+            background: #0d2b0d;
+            border: 1px solid #00ff8855;
+            border-radius: 4px;
+        }
+        .keys-section .keys-title {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .key-row {
+            background: #0a0a1a;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin: 3px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: #ffd700;
+            word-break: break-all;
+            cursor: pointer;
+            position: relative;
+        }
+        .key-row:hover { background: #1a1a3a; }
+        .key-row .key-type { color: #888; font-size: 10px; }
+        .key-row .copy-hint {
+            position: absolute;
+            right: 6px;
+            top: 4px;
+            color: #555;
+            font-size: 10px;
+        }
+        .key-row.copied .copy-hint { color: #00ff88; }
+
+        button.download { background: #0066ff; color: #fff; border-color: #0066ff; font-weight: bold; }
+        button.download:hover { background: #0055dd; }
+        button.download:disabled { background: #333; color: #666; border-color: #444; cursor: not-allowed; }
+        .dl-status {
+            margin-top: 6px;
+            padding: 8px;
+            background: #0d1b2e;
+            border: 1px solid #0066ff55;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .dl-status .dl-step { color: #0099ff; margin-top: 4px; }
+        .dl-status .dl-done { color: #00ff88; font-weight: bold; }
+        .dl-status .dl-error { color: #e94560; }
+        .dl-progress {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .dl-progress .bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0066ff, #00ff88);
+            border-radius: 2px;
+            transition: width 0.5s;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        .empty {
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+        .log-area {
+            background: #0a0a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: Consolas, monospace;
+            font-size: 10px;
+            line-height: 1.4;
+            display: none;
+        }
+        .log-area.visible { display: block; }
+        .log-entry { color: #aaa; }
+        .log-entry .type { color: #00cc66; }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .tab {
+            padding: 4px 12px;
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            color: #888;
+        }
+        .tab.active { background: #0f3460; color: #00ff88; border-bottom-color: #0f3460; }
+    </style>
+</head>
+<body>
+    <h1>
+        🔑 Widevine Key Logger
+        <span id="serverStatus" class="server-status server-offline">● Server Offline</span>
+    </h1>
+    
+    <div class="toolbar">
+        <button id="refreshBtn">🔄 Refresh</button>
+        <button id="exportBtn">📥 Export JSON</button>
+        <button id="exportTxtBtn">📝 Export Keys TXT</button>
+        <button id="clearBtn" class="danger">🗑️ Clear</button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="sessions">Sessions</div>
+        <div class="tab" data-tab="log">Event Log</div>
+    </div>
+
+    <div id="sessions-tab">
+        <div id="sessionList">
+            <div class="empty">No DRM sessions captured yet.<br>Play a DRM video to start capturing.</div>
+        </div>
+    </div>
+
+    <div id="log-tab" style="display:none">
+        <div class="log-area visible" id="logArea"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
