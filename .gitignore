@@ -1,0 +1,7 @@
+device.wvd
+server_debug.log
+keys/
+downloads/
+Logs/
+__pycache__/
+*.pyc
